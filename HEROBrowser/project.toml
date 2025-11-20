@@ -1,0 +1,23 @@
+name = "HEROBrowser"
+version = "0.1.0"
+type = "exec"
+language = "cpp"
+
+[sources]
+dirs = ["src"]
+
+[includes]
+dirs = ["include"]
+
+[build]
+flags = ["-Wall", "-Wextra", "-Wpedantic"]
+optimization = "2"
+
+[deps]
+
+[scripts]
+# Custom build scripts can be defined here
+# prebuild = "echo 'Running prebuild'"
+# postbuild = "echo 'Build complete'"
+
+
