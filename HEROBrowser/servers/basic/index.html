@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to HERO Protocol</title>
+</head>
+<body>
+    <h1>Welcome to the HERO Protocol!</h1>
+    
+    <h2>What is HERO?</h2>
+    <p>HERO is a lightweight UDP-based protocol designed for fast, efficient communication.</p>
+    
+    <h2>Features</h2>
+    <ul>
+        <li>UDP-based for low latency</li>
+        <li>Built-in acknowledgment system</li>
+        <li>Support for encrypted connections</li>
+        <li>Simple packet structure</li>
+        <li>Cross-platform C++ implementation</li>
+    </ul>
+    
+    <h2>Protocol Flags</h2>
+    <p>HERO uses five main packet types:</p>
+    <ul>
+        <li><strong>CONN (0)</strong> - Establish connection</li>
+        <li><strong>GIVE (1)</strong> - Send data</li>
+        <li><strong>TAKE (2)</strong> - Request resources</li>
+        <li><strong>SEEN (3)</strong> - Acknowledge receipt</li>
+        <li><strong>STOP (4)</strong> - Close connection</li>
+    </ul>
+    
+    <h2>Getting Started</h2>
+    <p>To create your own HERO server:</p>
+    <pre>
+    #include "HERO.h"
+    
+    HERO::HeroWebServer server(8080);
+    while (server.isRunning()) {
+        server.serve();
+    }
+    </pre>
+    
+    <h2>Browser Support</h2>
+    <p>This page is being served via the HERO protocol and rendered in the HERO Browser!</p>
+    <p>You're viewing this through a custom C++ browser built with SDL2.</p>
+    
+    <footer>
+        <p>HERO Protocol v1.0 - Built for speed and simplicity</p>
+    </footer>
+</body>
+</html>

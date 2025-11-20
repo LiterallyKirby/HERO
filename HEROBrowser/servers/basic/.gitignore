@@ -1,0 +1,29 @@
+# Build artifacts
+/target
+/.build
+/build
+compile_commands.json
+
+# vcpkg
+/vcpkg_installed
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Compiled files
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+*.exe
