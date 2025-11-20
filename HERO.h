@@ -455,6 +455,141 @@ public:
     bool isRunning() const { return running; }
 };
 
+// Simple Web Server Extension
+class HeroWebServer {
+private:
+    HeroServer server;
+    std::string root_dir;
+
+    std::string getMimeType(const std::string& path) {
+        if (path.ends_with(".html") || path.ends_with(".htm")) return "text/html";
+        if (path.ends_with(".css")) return "text/css";
+        if (path.ends_with(".js")) return "application/javascript";
+        if (path.ends_with(".json")) return "application/json";
+        if (path.ends_with(".png")) return "image/png";
+        if (path.ends_with(".jpg") || path.ends_with(".jpeg")) return "image/jpeg";
+        if (path.ends_with(".gif")) return "image/gif";
+        if (path.ends_with(".svg")) return "image/svg+xml";
+        if (path.ends_with(".txt")) return "text/plain";
+        return "application/octet-stream";
+    }
+
+    std::string readFile(const std::string& filepath) {
+        std::ifstream file(filepath, std::ios::binary);
+        if (!file) return "";
+        return std::string((std::istreambuf_iterator<char>(file)),
+                          std::istreambuf_iterator<char>());
+    }
+
+    void sendResponse(const std::string& content, const std::string& mime_type,
+                     const std::string& host, uint16_t port) {
+        std::string response = "HTTP/1.0 200 OK\r\n";
+        response += "Content-Type: " + mime_type + "\r\n";
+        response += "Content-Length: " + std::to_string(content.size()) + "\r\n\r\n";
+        response += content;
+        
+        // Send in chunks if needed (max ~60KB per packet for safety)
+        const size_t CHUNK_SIZE = 60000;
+        for (size_t i = 0; i < response.size(); i += CHUNK_SIZE) {
+            std::string chunk = response.substr(i, CHUNK_SIZE);
+            server.sendTo(chunk, host, port);
+        }
+    }
+
+    void send404(const std::string& host, uint16_t port) {
+        std::string response = "HTTP/1.0 404 Not Found\r\n\r\n<h1>404 Not Found</h1>";
+        server.sendTo(response, host, port);
+    }
+
+public:
+    HeroWebServer(uint16_t port, const std::string& root_directory = ".")
+        : server(port), root_dir(root_directory) {
+        server.start();
+    }
+
+    void serve() {
+        server.poll([&](const Packet& pkt, const std::string& host, uint16_t port) {
+            std::string request(pkt.payload.begin(), pkt.payload.end());
+            
+            // Parse GET request
+            if (request.starts_with("GET ")) {
+                size_t path_start = 4;
+                size_t path_end = request.find(' ', path_start);
+                if (path_end == std::string::npos) path_end = request.find('\r', path_start);
+                if (path_end == std::string::npos) path_end = request.size();
+                
+                std::string path = request.substr(path_start, path_end - path_start);
+                
+                // Default to index.html
+                if (path == "/" || path.empty()) {
+                    path = "/index.html";
+                }
+                
+                // Security: prevent directory traversal
+                if (path.find("..") != std::string::npos) {
+                    send404(host, port);
+                    return;
+                }
+                
+                std::string filepath = root_dir + path;
+                std::string content = readFile(filepath);
+                
+                if (!content.empty()) {
+                    sendResponse(content, getMimeType(path), host, port);
+                } else {
+                    send404(host, port);
+                }
+            }
+        });
+    }
+
+    bool isRunning() const { return server.isRunning(); }
+};
+
+// Simple Web Client (Browser)
+class HeroBrowser {
+private:
+    HeroClient client;
+    
+public:
+    std::string get(const std::string& host, uint16_t port, const std::string& path = "/") {
+        if (!client.isConnected()) {
+            if (!client.connect(host, port)) {
+                return "ERROR: Could not connect to server";
+            }
+        }
+        
+        // Send GET request
+        std::string request = "GET " + path + " HTTP/1.0\r\n\r\n";
+        client.send(request);
+        
+        // Receive response (handle multiple chunks)
+        std::string full_response;
+        std::string chunk;
+        
+        // Try to receive multiple chunks
+        for (int i = 0; i < 10; i++) {  // Max 10 chunks
+            if (client.receiveString(chunk, 1000)) {
+                full_response += chunk;
+            } else {
+                break;  // No more data
+            }
+        }
+        
+        // Extract body from HTTP response
+        size_t body_start = full_response.find("\r\n\r\n");
+        if (body_start != std::string::npos) {
+            return full_response.substr(body_start + 4);
+        }
+        
+        return full_response;
+    }
+    
+    void disconnect() {
+        client.disconnect();
+    }
+};
+
 } // namespace HERO
 
 #endif // HERO_H
