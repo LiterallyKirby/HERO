@@ -273,6 +273,16 @@ public:
         return socket.send(pkt.serialize(), server_host, server_port);
     }
 
+    // Send string directly
+    bool send(const std::string& text, const std::vector<uint8_t>& recipient_key = {}) {
+        return send(std::vector<uint8_t>(text.begin(), text.end()), recipient_key);
+    }
+
+    // Send C-string directly
+    bool send(const char* text, const std::vector<uint8_t>& recipient_key = {}) {
+        return send(std::string(text), recipient_key);
+    }
+
     bool ping() {
         if (!connected) return false;
         
@@ -298,6 +308,16 @@ public:
                     return true;
                 } catch (...) {}
             }
+        }
+        return false;
+    }
+
+    // Receive and get payload as string
+    bool receiveString(std::string& out_text, int timeout_ms = 100) {
+        Packet pkt;
+        if (receive(pkt, timeout_ms)) {
+            out_text = std::string(pkt.payload.begin(), pkt.payload.end());
+            return true;
         }
         return false;
     }
@@ -404,6 +424,28 @@ public:
     void sendTo(const std::vector<uint8_t>& data, const std::string& host, uint16_t port) {
         auto pkt = Packet::makeGive(0, {}, data);
         socket.send(pkt.serialize(), host, port);
+    }
+
+    // Send string directly
+    void sendTo(const std::string& text, const std::string& host, uint16_t port) {
+        sendTo(std::vector<uint8_t>(text.begin(), text.end()), host, port);
+    }
+
+    // Send C-string directly
+    void sendTo(const char* text, const std::string& host, uint16_t port) {
+        sendTo(std::string(text), host, port);
+    }
+
+    // Reply to a packet easily
+    void reply(const Packet& original_pkt, const std::vector<uint8_t>& response_data,
+               const std::string& client_host, uint16_t client_port) {
+        sendTo(response_data, client_host, client_port);
+    }
+
+    // Reply with string
+    void reply(const Packet& original_pkt, const std::string& response_text,
+               const std::string& client_host, uint16_t client_port) {
+        sendTo(response_text, client_host, client_port);
     }
 
     int getClientCount() const {
