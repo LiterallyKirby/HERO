@@ -20,6 +20,7 @@
     #include <netinet/in.h>
     #include <arpa/inet.h>
     #include <unistd.h>
+#include <string_view>
     #include <fcntl.h>
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
